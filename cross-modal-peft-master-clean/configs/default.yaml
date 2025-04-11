@@ -1,0 +1,72 @@
+# Default configuration for cross-modal retrieval with PEFT
+
+# Data configuration
+data:
+  root: "./data"
+  batch_size: 32
+  num_workers: 4
+  max_text_length: 77
+  audio_length: 10
+  audio_sample_rate: 16000
+  image_size: 224
+  subset_size: 1000  # Limit dataset size for faster iteration (set to null for full dataset)
+
+# Model configuration
+model:
+  embedding_dim: 512
+  dropout: 0.1
+
+  # Text encoder configuration
+  text:
+    model_name: "roberta-base"
+    freeze_base: true
+    output_dim: 768
+
+  # Audio encoder configuration
+  audio:
+    model_name: "MIT/ast-finetuned-audioset-10-10-0.4593"
+    freeze_base: true
+    output_dim: 768
+
+  # Image encoder configuration
+  image:
+    model_name: "google/vit-base-patch16-224"
+    freeze_base: true
+    output_dim: 768
+
+# PEFT configuration
+peft:
+  enabled: true
+  method: "lora"  # Options: lora, prefix_tuning, adapter
+
+  # Text PEFT configuration
+  text:
+    rank: 8
+    alpha: 16
+    dropout: 0.1
+    target_modules: ["query", "key", "value", "dense"]
+
+  # Audio PEFT configuration
+  audio:
+    rank: 8
+    alpha: 16
+    dropout: 0.1
+    target_modules: ["query", "key", "value", "dense"]
+
+  # Image PEFT configuration
+  image:
+    rank: 8
+    alpha: 16
+    dropout: 0.1
+    target_modules: ["query", "key", "value", "dense"]
+
+# Training configuration
+training:
+  num_epochs: 10
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  device: "cuda"
+  output_dir: "./outputs"
+  log_interval: 10
+  save_interval: 1
+  eval_interval: 1
