@@ -2,14 +2,14 @@
 
 # Data configuration
 data:
-  root: "./data/flickr8k_audio"
+  root: "/Users/bharadwajmadiraju/Downloads/flickr-8k"
   batch_size: 2                # Very small batch size
   num_workers: 1               # Minimal worker count
   max_text_length: 32          # Reduced text length
   audio_length: 3              # Reduced audio length
   audio_sample_rate: 16000
   image_size: 224              # Smaller images
-  subset_size: 40             # Tiny subset for testing
+  subset_size: 1000          # Tiny subset for testing
 
 # Model configuration
 model:
