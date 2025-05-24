@@ -68,6 +68,8 @@ pip install -r requirements.txt
 
 ### Dataset Setup
 
+Dataset Link - https://drive.google.com/file/d/1H_f-uHI8Z0C46dB6BMDQG-SzQq-mtvXh/view?usp=sharing
+
 1. **Download Flickr8k Audio Dataset**
 ```bash
 # Place your Flickr8k Audio dataset in the following structure:
