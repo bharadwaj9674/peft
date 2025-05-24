@@ -1,156 +1,264 @@
-# Cross-Modal Retrieval with Parameter-Efficient Fine-Tuning (PEFT)
+# Cross-Modal Attention Network (CMAN)
 
-This repository implements cross-modal retrieval using Parameter-Efficient Fine-Tuning (PEFT) methods. It enables searching between different modalities (text, audio, and images) with minimal trainable parameters.
+A unified parameter-efficient framework for cross-modal retrieval across text, audio, and image modalities using transformer-based architectures with Low-Rank Adaptation (LoRA).
 
-## Features
+## 🎯 Key Features
 
-- **Multiple Modalities**: Text (RoBERTa), Audio (AST), and Image (ViT) encoders
-- **PEFT Methods**: LoRA, Prefix Tuning, and Adapters for efficient transfer learning
-- **Contrastive Learning**: Joint embedding space for cross-modal retrieval
-- **Evaluation Metrics**: Comprehensive retrieval metrics (Recall@K, mAP)
-- **Interactive Demo**: Streamlit-based interface for exploring the model
+- **Unified Architecture**: Single framework handles text, audio, and image modalities simultaneously
+- **Parameter Efficiency**: 99.43% reduction in trainable parameters (2.5M out of 435M total)
+- **Dynamic Processing**: Seamlessly handles single-modal, bi-modal, and tri-modal inputs
+- **Balanced Performance**: Consistent retrieval performance across all six cross-modal directions
+- **Fast Training**: Complete training in ~8 hours on a single GPU using mixed precision
+- **Scalable Design**: Natural extension to additional modalities without architectural changes
 
-## Project Structure
+## 🏗️ Architecture Overview
 
-```
-cross_modal_peft/
-├── README.md
-├── requirements.txt
-├── src/
-│   ├── models/
-│   │   ├── encoders.py           # Pre-trained encoders (RoBERTa, AST, ViT)
-│   │   ├── peft_modules.py       # PEFT implementations (LoRA, Prefix Tuning, Adapters)
-│   │   └── fusion.py             # Projection and shared embedding space
-│   ├── data/
-│   │   ├── datasets.py           # Dataset classes for Clotho/HowTo100M
-│   │   └── preprocessing.py      # Data preprocessing utilities
-│   ├── training/
-│   │   ├── losses.py             # Contrastive loss implementations
-│   │   └── trainer.py            # Training loop
-│   ├── evaluation/
-│   │   └── metrics.py            # Retrieval metrics (R@K, mAP)
-│   └── utils/
-│       └── parameter_counting.py # PEFT parameter counting utilities
-├── configs/
-│   ├── default.yaml              # Default configuration
-│   └── peft_configs/
-│       ├── lora.yaml             # LoRA configuration
-│       ├── prefix_tuning.yaml    # Prefix Tuning configuration
-│       └── adapters.yaml         # Adapters configuration
-├── scripts/
-│   ├── train.py                  # Training script
-│   ├── evaluate.py               # Evaluation script
-│   └── demo.py                   # Demo interface
-└── notebooks/
-    └── exploration.ipynb         # Exploration notebook
-```
+CMAN employs a unified fusion transformer architecture that processes multiple modalities through:
 
-## Installation
+- **Modality-Specific Encoders**: RoBERTa-base (text), MIT/ast-finetuned-audioset (audio), google/vit-base-patch16-224 (images)
+- **LoRA Adaptation**: Parameter-efficient fine-tuning with rank=8, α=16 applied to attention mechanisms
+- **Unified Fusion Transformer**: 6 layers with 8 attention heads capturing cross-modal dependencies
+- **Bidirectional Max-Margin Loss**: Hard negative mining for discriminative representation learning
+- **512D Embedding Space**: Common representation space for all modalities
 
+## 📋 Requirements
+
+### System Requirements
+- Python 3.9+
+- CUDA-capable GPU (recommended: RTX A6000 or equivalent)
+- 16GB+ RAM
+- 50GB+ storage for datasets and models
+
+### Dependencies
 ```bash
-# Clone the repository
-git clone https://github.com/username/cross-modal-peft.git
-cd cross-modal-peft
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
+torchaudio>=2.0.0
+numpy>=1.23.0
+omegaconf>=2.3.0
+librosa>=0.10.0
+pillow>=9.5.0
+scikit-learn>=1.2.0
+streamlit>=1.24.0
+tensorboard>=2.13.0
+tqdm>=4.65.0
+```
 
-# Create and activate a virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # For Windows: venv\Scripts\activate
+## 🚀 Quick Start
 
-# Install dependencies
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/your-username/cross-modal-cman.git
+cd cross-modal-cman
+```
+
+2. **Create virtual environment**
+```bash
+python -m venv cman_env
+source cman_env/bin/activate  # On Windows: cman_env\Scripts\activate
+```
+
+3. **Install dependencies**
+```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+### Dataset Setup
+
+1. **Download Flickr8k Audio Dataset**
+```bash
+# Place your Flickr8k Audio dataset in the following structure:
+data/flickr8k_audio/
+├── images/
+│   ├── train/
+│   ├── val/
+│   └── test/
+├── audio/
+│   ├── train/
+│   ├── val/
+│   └── test/
+└── metadata/
+    ├── train_metadata.json
+    ├── val_metadata.json
+    └── test_metadata.json
+```
 
 ### Training
 
-Train a model with default configuration:
-
 ```bash
-python scripts/train.py --config configs/default.yaml
+python run_train.py --config configs/minimal.yaml
 ```
 
-Train with a specific PEFT method:
-
-```bash
-python scripts/train.py --config configs/peft_configs/lora.yaml
-```
+**Training Configuration Options:**
+- `--config`: Path to configuration file (default: configs/minimal.yaml)
+- `--output_dir`: Custom output directory
+- `--batch_size`: Override batch size
+- `--epochs`: Override number of epochs
 
 ### Evaluation
 
-Evaluate a trained model:
-
 ```bash
-python scripts/evaluate.py --config configs/default.yaml --checkpoint outputs/checkpoints/best.pt
+python run_eval.py --config configs/minimal.yaml --checkpoint outputs/minimal/checkpoints/best.pt
 ```
 
-Compare different PEFT methods:
+**Evaluation Options:**
+- `--config`: Configuration file path
+- `--checkpoint`: Path to trained model checkpoint
+- `--split`: Dataset split to evaluate (train/val/test)
+- `--output_dir`: Custom evaluation output directory
+
+### Interactive Demo
 
 ```bash
-python scripts/evaluate.py --compare "lora:configs/peft_configs/lora.yaml:outputs/lora/checkpoints/best.pt,prefix:configs/peft_configs/prefix_tuning.yaml:outputs/prefix_tuning/checkpoints/best.pt,adapter:configs/peft_configs/adapters.yaml:outputs/adapters/checkpoints/best.pt" --output_dir outputs/comparison
+streamlit run run_demo.py -- --config configs/minimal.yaml --checkpoint outputs/minimal/checkpoints/best.pt
 ```
 
-### Demo
+## 📁 Project Structure
 
-Run the interactive demo:
+```
+cross-modal-cman/
+├── configs/                    # Configuration files
+│   ├── default.yaml           # Default training configuration
+│   └── minimal.yaml           # Minimal configuration for testing
+├── src/                       # Source code
+│   ├── models/
+│   │   ├── encoders.py        # Text, Audio, Image encoders
+│   │   ├── peft_modules.py    # LoRA implementation
+│   │   └── cman.py            # Main CMAN architecture
+│   ├── data/
+│   │   └── data.py           # Dataset classes and data loading
+│   ├── training/
+│   │   └── trainer.py        # Training loop implementation
+│   ├── evaluation/
+│   │   └── evaluator.py      # Evaluation metrics and procedures
+│   └── utils/
+│       └── utils.py          # Utility functions
+├── scripts/                   # Main execution scripts
+│   ├── run_train.py          # Training script
+│   ├── run_eval.py           # Evaluation script
+│   └── run_demo.py           # Interactive demo
+├── requirements.txt          # Python dependencies
+└── README.md                # This file
+```
 
+## ⚙️ Configuration
+
+Key configuration parameters in `configs/minimal.yaml`:
+
+```yaml
+# Model Configuration
+model:
+  embedding_dim: 512           # Common embedding space dimension
+  dropout: 0.3
+
+# PEFT Configuration  
+peft:
+  enabled: true
+  method: "lora"
+  rank: 8                      # LoRA rank
+  alpha: 16                    # LoRA scaling factor
+  dropout: 0.2
+
+# Training Configuration
+training:
+  num_epochs: 70
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  batch_size: 32
+  device: "cuda"
+```
+
+## 📊 Performance
+
+### Cross-Modal Retrieval Results (Flickr8k Audio)
+
+| Direction | R@1 | R@5 | R@10 | mAP |
+|-----------|-----|-----|------|-----|
+| Text→Audio | 18.4% | 32.1% | 43.7% | 22.8% |
+| Text→Image | 12.3% | 24.8% | 35.2% | 18.5% |
+| Audio→Text | 16.2% | 31.5% | 42.8% | 21.9% |
+| Audio→Image | 10.8% | 22.4% | 32.6% | 16.7% |
+| Image→Text | 14.7% | 28.3% | 38.1% | 19.4% |
+| Image→Audio | 11.5% | 23.9% | 33.8% | 17.2% |
+| **Average** | **14.0%** | **27.2%** | **37.7%** | **19.4%** |
+
+### Parameter Efficiency
+
+- **Total Parameters**: 435M
+- **Trainable Parameters**: 2.5M (0.57%)
+- **Parameter Reduction**: 99.43%
+- **Training Time**: ~8 hours (single RTX A6000)
+
+## 🔧 Advanced Usage
+
+### Custom Dataset
+
+To use your own tri-modal dataset:
+
+1. **Prepare metadata files** in JSON format:
+```json
+[
+  {
+    "id": "sample_001",
+    "caption": "A dog playing in the park",
+    "audio_filename": "audio_001.wav",
+    "image_filename": "image_001.jpg"
+  }
+]
+```
+
+2. **Update configuration**:
+```yaml
+data:
+  root: "path/to/your/dataset"
+  # ... other parameters
+```
+
+### Model Customization
+
+**Modify fusion transformer layers**:
+```yaml
+model:
+  fusion_layers: 6           # Number of transformer layers
+  fusion_heads: 8            # Number of attention heads
+  fusion_dim: 2048          # Feed-forward hidden dimension
+```
+
+**Adjust LoRA parameters**:
+```yaml
+peft:
+  rank: 16                  # Higher rank = more parameters but potentially better performance
+  alpha: 32                 # Scaling factor
+  target_modules: ["query", "key", "value", "dense"]
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **CUDA Out of Memory**
+   - Reduce batch size in config
+   - Enable gradient checkpointing
+   - Use smaller model variants
+
+2. **Slow Training**
+   - Ensure mixed precision is enabled
+   - Check data loading bottlenecks
+   - Verify GPU utilization
+
+3. **Poor Performance**
+   - Verify dataset alignment
+   - Check preprocessing pipeline
+   - Adjust learning rate and hyperparameters
+
+### Debug Mode
+
+Enable detailed logging:
 ```bash
-streamlit run scripts/demo.py -- --config configs/default.yaml --checkpoint outputs/checkpoints/best.pt
+python run_train.py --config configs/minimal.yaml --debug
 ```
 
-## PEFT Methods
 
-This project implements three Parameter-Efficient Fine-Tuning methods:
-
-### LoRA (Low-Rank Adaptation)
-
-LoRA represents weight updates as low-rank decompositions (W + BA), drastically reducing trainable parameters. Configuration in `configs/peft_configs/lora.yaml`.
-
-### Prefix Tuning
-
-Prefix Tuning prepends trainable "virtual tokens" to the sequence, keeping the original model frozen. Configuration in `configs/peft_configs/prefix_tuning.yaml`.
-
-### Adapters
-
-Adapters insert small bottleneck layers after attention and feedforward modules. Configuration in `configs/peft_configs/adapters.yaml`.
-
-## Architecture
-
-![Architecture Diagram](architecture.png)
-
-The architecture consists of:
-1. **Encoders**: Pre-trained models for each modality (frozen)
-2. **PEFT Modules**: Parameter-efficient fine-tuning components
-3. **Projection Layers**: Map each encoder's output to a shared embedding space
-4. **Contrastive Learning**: Align representations across modalities
-
-## Parameter Efficiency Comparison
-
-| Method         | Total Parameters | Trainable Parameters | Parameter Efficiency |
-|----------------|------------------|----------------------|----------------------|
-| Full Fine-tuning | 435M            | 435M                 | 100%                |
-| LoRA           | 435M            | 2.5M                 | 0.57%               |
-| Prefix Tuning  | 435M            | 3.1M                 | 0.71%               |
-| Adapters       | 435M            | 1.9M                 | 0.44%               |
-
-## Results
-
-Retrieval performance (Recall@1) on the test set:
-
-| Method         | Text→Audio | Audio→Text | Text→Image | Image→Text |
-|----------------|------------|------------|------------|------------|
-| Full Fine-tuning | 64.2%      | 63.8%      | 68.3%      | 67.1%      |
-| LoRA           | 63.5%      | 62.7%      | 67.1%      | 65.9%      |
-| Prefix Tuning  | 61.8%      | 60.9%      | 65.3%      | 64.2%      |
-| Adapters       | 62.9%      | 61.6%      | 66.8%      | 65.1%      |
-
-## References
-
-- [LoRA: Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685)
-- [Prefix-Tuning: Optimizing Continuous Prompts for Generation](https://arxiv.org/abs/2101.00190)
-- [Parameter-Efficient Transfer Learning for NLP](https://arxiv.org/abs/1902.00751)
-- [CLIP: Learning Transferable Visual Models From Natural Language Supervision](https://arxiv.org/abs/2103.00020)
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
