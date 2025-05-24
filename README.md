@@ -173,18 +173,6 @@ training:
 
 ## 📊 Performance
 
-### Cross-Modal Retrieval Results (Flickr8k Audio)
-
-| Direction | R@1 | R@5 | R@10 | mAP |
-|-----------|-----|-----|------|-----|
-| Text→Audio | 18.4% | 32.1% | 43.7% | 22.8% |
-| Text→Image | 12.3% | 24.8% | 35.2% | 18.5% |
-| Audio→Text | 16.2% | 31.5% | 42.8% | 21.9% |
-| Audio→Image | 10.8% | 22.4% | 32.6% | 16.7% |
-| Image→Text | 14.7% | 28.3% | 38.1% | 19.4% |
-| Image→Audio | 11.5% | 23.9% | 33.8% | 17.2% |
-| **Average** | **14.0%** | **27.2%** | **37.7%** | **19.4%** |
-
 ### Parameter Efficiency
 
 - **Total Parameters**: 435M
